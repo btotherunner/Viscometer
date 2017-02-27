@@ -32,7 +32,7 @@ int StartWertMessung = 50;
 
 
 //RELAY
-  const int relaisPin = 4;
+  const int relaisPin = 10;
 //ENDE RELAY
 
 

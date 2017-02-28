@@ -147,7 +147,7 @@ void loop() {
 
   //temp abfrage des Beckens -- start des Motor
 
-  //Temp unter 25°C kein start und led auf blau
+  //Temp unter XX°C kein start und led auf blau
   if (sensors.getTempCByIndex(0) < BeckenMinTemp) {                         //Wenn Temp zu Kalt:
     
     if (digitalRead(buttonPinPlus) == 0) {                                  //Taster für BeckenTempAnpassung
@@ -184,12 +184,7 @@ void loop() {
   
     // LED AUF BLAU!
     for (int i = 0; i < NUMPIXELS; i++) {
-      pixels.setPixelColor(i, pixels.Color(51, 0, 255));                    // BLAUE LED
-      pixels.show();                                                        // This sends the updated pixel color to the hardware.
-    }
-    delay(500);
-    for (int i = 0; i < NUMPIXELS; i++) {
-      pixels.setPixelColor(i, pixels.Color(0, 0, 0));                       // BLAUE AUS
+      pixels.setPixelColor(i, pixels.Color(0, 0, 255));                    // BLAUE LED
       pixels.show();                                                        // This sends the updated pixel color to the hardware.
     }
     //ENDE LED AUF BLAU

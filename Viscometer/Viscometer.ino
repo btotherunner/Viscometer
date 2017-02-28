@@ -1,23 +1,18 @@
-//default wert für VascoMessung
 int StartWertMessung = 50;																			//Definiert die Variabel StartWertMessung und setzt den Wert auf X
 int TolleranzWert = 5;																				//Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
+int BeckenMinTemp = 25;																				//Definiert die mindest Temp des Leim Beckens
 
 //Start Display
   #include <SPI.h>																					//Lade Extension für OLED
   #include <Wire.h>																					//Lade Extension für OLED
   #include <Adafruit_GFX.h>																			//Lade Extension für OLED
   #include <Adafruit_SSD1306.h>																		//Lade Extension für OLED
-  
-  // If using software SPI (the default case):
-  #define OLED_MOSI   39  																			// Data port zum OLED Display
-  #define OLED_CLK   37  																			// CLK port zum OLED Display
-  #define OLED_DC    35   																			// DC Port zum OLED DISPLAY
-  #define OLED_CS    31 																			// CS Port zum OLED Display
-  #define OLED_RESET 33 																			// RST Port zum OLED Display
-  
+  #define OLED_MOSI   39  																			//Data port zum OLED Display
+  #define OLED_CLK   37  																			//CLK port zum OLED Display
+  #define OLED_DC    35   																			//DC Port zum OLED DISPLAY
+  #define OLED_CS    31 																			//CS Port zum OLED Display
+  #define OLED_RESET 33 																			//RST Port zum OLED Display
   Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);						//Initialisiere das OLED Display
-  
-  
   #define NUMFLAKES 10																																					
   #define XPOS 0
   #define YPOS 1
@@ -29,7 +24,6 @@ int TolleranzWert = 5;																				//Definiert die Variable TolleranzWert
 	#ifdef __AVR__																			
 	  #include <avr/power.h>																		//Lade Extension für LED-Leiste WS
 	#endif
-	
 	#define PIN 45      																			//Definiert den digital PIN der LED Leiste  
 	#define NUMPIXELS      4																		//Definiert die Anzahl der LED´s am Port
 	Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);				//Initialisiere die Lib. für die LED-Leiste
@@ -53,7 +47,7 @@ int TolleranzWert = 5;																				//Definiert die Variable TolleranzWert
   int FiltVal = StartWertMessung;																	//Definiert Variable zum glätten der Werte
   int FF;																							//Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
   int NewVal = StartWertMessung;																	//Definiert Variable zum glätten der Werte
-  
+
   int FiltVal2 = StartWertMessung;																	//Definiert Variable zum glätten der Werte
   int FF2;																							//Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
   int NewVal2 = StartWertMessung;																	//Definiert Variable zum glätten der Werte
@@ -91,96 +85,92 @@ int TolleranzWert = 5;																				//Definiert die Variable TolleranzWert
 
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(9600);																				//Initialisiere Serielle-Schnittstelle 															
 
-  //LED LEISTE
-		// This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
-		#if defined (__AVR_ATtiny85__)
+//LED LEISTE
+	#if defined (__AVR_ATtiny85__)																	
 		if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-		#endif
-		// End of trinket special code
+	#endif
+	pixels.begin();																					//Initialisiere NeoPixel LED Leiste
+//ENDE LED LEISTE
 
-		pixels.begin(); // This initializes the NeoPixel library.
-  //ENDE LED LEISTE
-
-  //RELAYS
-	pinMode(relaisPin, OUTPUT); // Den PWM PIN "relaisPin" als Ausgangssignal setzen.
-  //RELAYS END
+//RELAYS
+	pinMode(relaisPin, OUTPUT); 																	// Den PWM PIN "relaisPin" als Ausgangssignal setzen.				
+//RELAYS END
   
-  //TASTER
-	pinMode(buttonPinPlus, INPUT);
-	pinMode(buttonPinMinus, INPUT);
-  //ENDE TASTER
+//TASTER
+	pinMode(buttonPinPlus, INPUT);																	//Setzt den Taster Port als Input 
+	pinMode(buttonPinMinus, INPUT);																	//Setzt den Taster Port als Input 
+//ENDE TASTER
 
-  // Start MOTOR
-	  pinMode(directionPin, OUTPUT); //Initiates Motor Channel B pin
-	  pinMode(brakePin, OUTPUT); //Initiates Brake Channel B pin
-  //ENDE MOTOR
+// Start MOTOR
+	pinMode(directionPin, OUTPUT); 																	//Initiates Motor Channel B pin								
+	pinMode(brakePin, OUTPUT); 																		//Initiates Brake Channel B pin
+//ENDE MOTOR
 
-  //START DS TEMP
-	sensors.begin();
-  //END DS TEMP
+//START DS TEMP
+	sensors.begin();																				//Initialisiere Beckentemperatur
+//END DS TEMP
 
-  //DHT BEGIN
-	dht.begin();
-  //DHT END
+//DHT BEGIN
+	dht.begin();																					//Initialisiere Raumfeuchtigkeit & Raumtemperatur Sensor
+//DHT END
 
-  //START DISPLAY
-		// by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-		display.begin(SSD1306_SWITCHCAPVCC);
-		// init done
-
-		display.display();
-		delay(1000);
-
-		// Clear the buffer.
-		display.clearDisplay();
-
-}
+//START DISPLAY
+	// by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+	display.begin(SSD1306_SWITCHCAPVCC);
+	// init done
+	display.display();																				//Zeigt den BufferScreen
+	delay(1000);																					//dauer vor dem loeschen des BufferScreen
+	// Clear the buffer.
+	display.clearDisplay();																			//Leert das Display
 //Ende DISPLAY
+}
+
 
 void loop() {
 	//START DS TEMP
-		sensors.requestTemperatures();
+		sensors.requestTemperatures();																//fragt Beckentemperatur ab
 	//ENDE DS TEMP
 
 	//START DHT
-		float h = dht.readHumidity();     //Luftfeuchte auslesen
-		float t = dht.readTemperature();  //Temperatur auslesen
+		float h = dht.readHumidity();     															//Luftfeuchte auslesen			
+		float t = dht.readTemperature();  															//Temperatur auslesen
 	//END DHT
 
 //temp abfrage des Beckens -- start des Motor
 
 //Temp unter 25°C kein start und led auf blau
-  if(sensors.getTempCByIndex(0)<25){
+  if(sensors.getTempCByIndex(0)<BeckenMinTemp){														//Wenn Temp zu Kalt:
 
       //START DISPLAY AUSGABE
       display.setTextSize(1);
 	  display.setTextColor(WHITE);
 	  display.setCursor(0, 0);
-      display.println("ACHTUNG Leim zu kalt");
-      display.print("Temp: ");    // Leere Zeile
-      display.print(sensors.getTempCByIndex(0));
-	  display.display();
+      display.println("ACHTUNG Leim zu kalt");														//Fehler ausgabe auf dem Display
+      display.print("Temp: ");    																	//Fehler ausgabe auf dem Display
+      display.print(sensors.getTempCByIndex(0));display.print("/");	display.print(BeckenMinTemp);	//Aktueller Wert (aktuellerwert/sollwert)
+	  display.display();																			//Display ausgabe
       //ENDE DISPLAY AUSGABE
 
       //MOTOR AUS!
-        digitalWrite(directionPin, HIGH); //Establishes forward direction of Channel A
-        digitalWrite(brakePin, HIGH);   //Disengage the Brake for Channel A
-        analogWrite(pwmPin, 0);   //Spins the motor on Channel A at full speed
+        digitalWrite(directionPin, HIGH); 															//Schaltet den Motor aus
+        digitalWrite(brakePin, HIGH);   															//Schaltet den Motor aus
+        analogWrite(pwmPin, 0);   																	//Motor geschwindikeit aus
       //ENDE MOTOR AUS!
      
 	 // LED AUF BLAU! 
         for(int i=0;i<NUMPIXELS;i++){
-        pixels.setPixelColor(i, pixels.Color(51,0,255)); // BLAUE LED
-        pixels.show(); // This sends the updated pixel color to the hardware.
+			pixels.setPixelColor(i, pixels.Color(51,0,255)); 										// BLAUE LED
+			pixels.show(); 																			// This sends the updated pixel color to the hardware.
         }
       //ENDE LED AUF BLAU
    
-   }else{
+   }
+   else{					
     
-//Temp über 25°C
-// Eigentlicher Start!!!
+
+// Eigentlicher Start!!!															
   
   //TASTER SOLL WERT
   if (digitalRead(buttonPinPlus) == 0) {
@@ -193,91 +183,91 @@ void loop() {
 
   //START MOTOR
   //backward @ half speed
-  digitalWrite(directionPin, HIGH); //Establishes forward direction of Channel A
-  digitalWrite(brakePin, LOW);   //Disengage the Brake for Channel A
-  analogWrite(pwmPin, 255);   //Spins the motor on Channel A at full speed
+  digitalWrite(directionPin, HIGH); 																//Establishes forward direction of Channel A
+  digitalWrite(brakePin, LOW);   																	//Disengage the Brake for Channel A
+  analogWrite(pwmPin, 255);   																		//Spins the motor on Channel A at full speed
   //ENDE  MOTOR
 
 
-  //glaetten der werte
-  NewVal = analogRead(currentPin);
-  FF = 9;
-  FiltVal = ((FiltVal * FF) + NewVal) / (FF + 1.0);
-  //zweite glaettung
-  NewVal2 = FiltVal;
-  FF2 = 9;
-  FiltVal2 = ((FiltVal2 * FF2) + NewVal2) / (FF2 + 1.0);
-  //dritte glaettung
-  NewVal3 = FiltVal2;
-  FF3 = 9;
-  FiltVal3 = ((FiltVal3 * FF3) + NewVal3) / (FF2 + 1.0);
+//glaetten der werte
+		NewVal = analogRead(currentPin);
+		FF = 9;
+		FiltVal = ((FiltVal * FF) + NewVal) / (FF + 1.0);
+	//zweite glaettung
+		NewVal2 = FiltVal;
+		FF2 = 9;
+		FiltVal2 = ((FiltVal2 * FF2) + NewVal2) / (FF2 + 1.0);
+	//dritte glaettung
+		NewVal3 = FiltVal2;
+		FF3 = 9;
+		FiltVal3 = ((FiltVal3 * FF3) + NewVal3) / (FF2 + 1.0);
 
-  //mitteln der werte
-  mittelFitalVal = 0;
+	//mitteln der werte
+		mittelFitalVal = 0;
 
-  mittelFitalVal = FiltVal3;
-  //ende glaetten
+	mittelFitalVal = FiltVal3;
+//ende glaetten
 
-  //Setzt für das OLED DISPLAY den Beginn auf 0.0 und die Schriftfarbe auf Weiß.
-  display.setCursor(0, 0);
-  display.setTextColor(WHITE);
+  
+	display.setCursor(0, 0);																		//Setzt für das OLED DISPLAY den Beginn auf 0.0 und die Schriftfarbe auf Weiß.
+	display.setTextColor(WHITE);
 
-  //Tolleranz abfrage
+//Tolleranz abfrage
   if (mittelFitalVal > (SollWert + TolleranzWert)) {
-    display.invertDisplay(true);															// Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
-    digitalWrite(relaisPin, LOW); 															// Relais aus
-    display.setTextSize(1);																	// Schriftgroeße 1 (klein)
-    display.println("Mehr Wasser");    														// Leere Zeile
-    display.setTextSize(2);																	// Schriftgroeße 2 (mittel)						
-    display.print(mittelFitalVal); display.print("/"); display.println(SollWert);			// Ausgabe des aktuellen Viskositaetswerts und den SollWert (bsp:  45/50)
-    display.clearDisplay();																	// Loescht das Display
+    display.invertDisplay(true);																	// Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
+    digitalWrite(relaisPin, LOW); 																	// Relais aus
+    display.setTextSize(1);																			// Schriftgroeße 1 (klein)
+    display.println("Mehr Wasser");    																// Leere Zeile
+    display.setTextSize(2);																			// Schriftgroeße 2 (mittel)						
+    display.print(mittelFitalVal); display.print("/"); display.println(SollWert);					// Ausgabe des aktuellen Viskositaetswerts und den SollWert (bsp:  45/50)
+    display.clearDisplay();																			// Loescht das Display
 
     for(int i=0;i<NUMPIXELS;i++){
-		pixels.setPixelColor(i, pixels.Color(255,0,0)); // Rote LED
+		pixels.setPixelColor(i, pixels.Color(255,0,0)); 											// Rote LED
 		pixels.show(); // This sends the updated pixel color to the hardware.
     }
   }
   else if (mittelFitalVal < (SollWert - TolleranzWert)) {
     display.invertDisplay(true);
-    digitalWrite(relaisPin, HIGH); //Relais an
+    digitalWrite(relaisPin, HIGH); 																	//Relais an
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.println("Weniger Wasser");    // Leere Zeile
+    display.println("Weniger Wasser");    															// Leere Zeile
     display.setTextSize(2);
-    //display.setTextColor(BLACK, WHITE); // 'inverted' text
+    //display.setTextColor(BLACK, WHITE); 															// 'inverted' text
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
 
     for(int i=0;i<NUMPIXELS;i++){
-		pixels.setPixelColor(i, pixels.Color(255,102,0)); // Orange LED
-		pixels.show(); // This sends the updated pixel color to the hardware.
+		pixels.setPixelColor(i, pixels.Color(255,102,0)); 											// Orange LED
+		pixels.show(); 																				// This sends the updated pixel color to the hardware.
     }
   }
   else {
     display.invertDisplay(false);
-    digitalWrite(relaisPin, LOW); //Relais aus
+    digitalWrite(relaisPin, LOW); 																	//Relais aus
     display.setTextColor(WHITE);
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.println("O.K.");    // Leere Zeile
+    display.println("O.K.");    																	// Leere Zeile
     display.setTextSize(2);
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
     
     for(int i=0;i<NUMPIXELS;i++){
-		pixels.setPixelColor(i, pixels.Color(0,150,0)); // Grüne LED
-		pixels.show(); // This sends the updated pixel color to the hardware.
+		pixels.setPixelColor(i, pixels.Color(0,150,0)); 											// Grüne LED
+		pixels.show(); 																				// This sends the updated pixel color to the hardware.
     }
   }
-  //Ende Tolleranz
+//Ende Tolleranz
 
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.println(" ");    // Leere Zeile
+  display.println(" ");    																			// Leere Zeile
   display.print(sensors.getTempCByIndex(0));
-  display.println(" Leimtemp.");  //Beckentemperatur
+  display.println(" Leimtemp.");  																	//Beckentemperatur
   display.print(h);
-  display.println(" Luftfeuch.");    // Luftfeuchtigkeit
+  display.println(" Luftfeuch.");    																// Luftfeuchtigkeit
   display.print(t);
-  display.println(" Raumtemp.");   // Ungebungslufttemperatur
+  display.println(" Raumtemp.");   																	// Ungebungslufttemperatur
   display.display();
   
   display.clearDisplay();
@@ -285,15 +275,15 @@ void loop() {
   
 //ENDE DISPLAY AUSGABE
 
-  Serial.print(analogRead(currentPin));     //Ausgabe des Analogen CurrentSignals
+  Serial.print(analogRead(currentPin));     														//Ausgabe des Analogen CurrentSignals
   Serial.print("\t");
-  Serial.print(mittelFitalVal);             //Geglätteter Wert des Current Signals
+  Serial.print(mittelFitalVal);             														//Geglätteter Wert des Current Signals
   Serial.print("\t");
-  Serial.print(h);                           //Raumfeuchtigkeit
+  Serial.print(h);                           														//Raumfeuchtigkeit
   Serial.print("\t");
-  Serial.print(t);                           //Raumtemperatur
+  Serial.print(t);                           														//Raumtemperatur
   Serial.print("\t");
-  Serial.println(sensors.getTempCByIndex(0));  //Beckentemperatur
+  Serial.println(sensors.getTempCByIndex(0));  														//Beckentemperatur
    
-   delay(333);
+   delay(333);																						
 }

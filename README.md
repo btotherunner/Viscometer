@@ -11,4 +11,6 @@ Anhand eines Stromssensors im Motorshield wird die viskosität bestimmt. Wird de
 
 ![Alt text](https://github.com/btotherunner/Viscometer/blob/master/Viscometer/Arduino%20Plotter%20-%20Gl%C3%A4ttung%20der%20Werte.png "Glättung der analog Werte")
 
-![Alt text](https://github.com/btotherunner/Viscometer/blob/master/Viscometer/Aufbau%20-%20Testphase.jpg "Aufbau in der Testphase")
+![Alt text](https://github.com/btotherunner/Viscometer/blob/master/Viscometer/visco_ok.jpg "Status")
+
+![Alt text](https://github.com/btotherunner/Viscometer/blob/master/Viscometer/visco_wenigwasser.jpg "zu Wenig Wasser")

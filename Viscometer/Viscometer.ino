@@ -1,3 +1,6 @@
+//default wert für VascoMessung
+int StartWertMessung = 50;
+int TolleranzWert = 5;
 
 //Start Display
   #include <SPI.h>
@@ -22,22 +25,19 @@
 //Ende Display
 
 //LED Leiste
-#include <Adafruit_NeoPixel.h>
-#ifdef __AVR__
-  #include <avr/power.h>
-#endif
+	#include <Adafruit_NeoPixel.h>
+	#ifdef __AVR__
+	  #include <avr/power.h>
+	#endif
 
-// Which pin on the Arduino is connected to the NeoPixels?
-// On a Trinket or Gemma we suggest changing this to 1
-#define PIN 45        
-#define NUMPIXELS      4
+	// Which pin on the Arduino is connected to the NeoPixels?
+	// On a Trinket or Gemma we suggest changing this to 1
+	#define PIN 45        
+	#define NUMPIXELS      4
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
-
+	Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 //Ende LED Leiste
 
-int StartWertMessung = 50;
 
 //Taster
   const int buttonPinPlus = 24;
@@ -65,7 +65,6 @@ int StartWertMessung = 50;
   int FF3;
   int NewVal3 = StartWertMessung;
   
-  int sumFiltVal = StartWertMessung;
   int mittelFitalVal = StartWertMessung;
 
 //Ende Werte zum Mitteln
@@ -114,37 +113,35 @@ void setup()   {
   Serial.begin(9600);
 
   //LED LEISTE
-  // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
-#if defined (__AVR_ATtiny85__)
-  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-#endif
-  // End of trinket special code
+		// This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
+		#if defined (__AVR_ATtiny85__)
+		if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
+		#endif
+		// End of trinket special code
 
-  pixels.begin(); // This initializes the NeoPixel library.
-
+		pixels.begin(); // This initializes the NeoPixel library.
   //ENDE LED LEISTE
 
   //RELAYS
-  pinMode(relaisPin, OUTPUT); // Den PWM PIN "relaisPin" als Ausgangssignal setzen.
+	pinMode(relaisPin, OUTPUT); // Den PWM PIN "relaisPin" als Ausgangssignal setzen.
   //RELAYS END
   
   //TASTER
-  pinMode(buttonPinPlus, INPUT);
-  pinMode(buttonPinMinus, INPUT);
-
+	pinMode(buttonPinPlus, INPUT);
+	pinMode(buttonPinMinus, INPUT);
   //ENDE TASTER
 
   // Start MOTOR
-  pinMode(directionPin, OUTPUT); //Initiates Motor Channel B pin
-  pinMode(brakePin, OUTPUT); //Initiates Brake Channel B pin
+	  pinMode(directionPin, OUTPUT); //Initiates Motor Channel B pin
+	  pinMode(brakePin, OUTPUT); //Initiates Brake Channel B pin
   //ENDE MOTOR
 
   //START DS TEMP
-  sensors.begin();
+	sensors.begin();
   //END DS TEMP
 
   //DHT BEGIN
-  dht.begin();
+	dht.begin();
   //DHT END
 
   //START DISPLAY
@@ -197,10 +194,10 @@ void loop() {
         digitalWrite(brakePin, HIGH);   //Disengage the Brake for Channel A
         analogWrite(pwmPin, 0);   //Spins the motor on Channel A at full speed
       //ENDE MOTOR AUS!
-      // LED AUF BLAU! 
+     
+	 // LED AUF BLAU! 
         for(int i=0;i<NUMPIXELS;i++){
-        // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-        pixels.setPixelColor(i, pixels.Color(51,0,255)); // Moderately bright green color.
+        pixels.setPixelColor(i, pixels.Color(51,0,255)); // BLAUE LED
         pixels.show(); // This sends the updated pixel color to the hardware.
         }
       //ENDE LED AUF BLAU
@@ -231,12 +228,10 @@ void loop() {
   NewVal = analogRead(currentPin);
   FF = 9;
   FiltVal = ((FiltVal * FF) + NewVal) / (FF + 1.0);
-
   //zweite glaettung
   NewVal2 = FiltVal;
   FF2 = 9;
   FiltVal2 = ((FiltVal2 * FF2) + NewVal2) / (FF2 + 1.0);
-
   //dritte glaettung
   NewVal3 = FiltVal2;
   FF3 = 9;
@@ -244,7 +239,6 @@ void loop() {
 
   //mitteln der werte
   mittelFitalVal = 0;
-  sumFiltVal = 0;
 
   mittelFitalVal = FiltVal3;
   //ende glaetten
@@ -254,7 +248,7 @@ void loop() {
   display.setTextColor(WHITE);
 
   //Tolleranz abfrage
-  if (mittelFitalVal > (SollWert + 5)) {
+  if (mittelFitalVal > (SollWert + TolleranzWert)) {
     display.invertDisplay(true);
     digitalWrite(relaisPin, LOW); //Relais aus
     display.setTextSize(1);
@@ -266,12 +260,11 @@ void loop() {
     display.clearDisplay();
 
     for(int i=0;i<NUMPIXELS;i++){
-    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(255,0,0)); // Moderately bright green color.
-    pixels.show(); // This sends the updated pixel color to the hardware.
+		pixels.setPixelColor(i, pixels.Color(255,0,0)); // Rote LED
+		pixels.show(); // This sends the updated pixel color to the hardware.
     }
   }
-  else if (mittelFitalVal < (SollWert - 5)) {
+  else if (mittelFitalVal < (SollWert - TolleranzWert)) {
     display.invertDisplay(true);
     digitalWrite(relaisPin, HIGH); //Relais an
     display.setTextSize(1);
@@ -282,9 +275,8 @@ void loop() {
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
 
     for(int i=0;i<NUMPIXELS;i++){
-    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(255,102,0)); // Moderately bright green color.
-    pixels.show(); // This sends the updated pixel color to the hardware.
+		pixels.setPixelColor(i, pixels.Color(255,102,0)); // Orange LED
+		pixels.show(); // This sends the updated pixel color to the hardware.
     }
   }
   else {
@@ -298,9 +290,8 @@ void loop() {
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
     
     for(int i=0;i<NUMPIXELS;i++){
-    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-    pixels.setPixelColor(i, pixels.Color(0,150,0)); // Moderately bright green color.
-    pixels.show(); // This sends the updated pixel color to the hardware.
+		pixels.setPixelColor(i, pixels.Color(0,150,0)); // Grüne LED
+		pixels.show(); // This sends the updated pixel color to the hardware.
     }
   }
   //Ende Tolleranz
@@ -317,7 +308,7 @@ void loop() {
   display.display();
   
   display.clearDisplay();
-   }
+}
   
 //ENDE DISPLAY AUSGABE
 

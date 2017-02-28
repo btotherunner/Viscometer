@@ -1,6 +1,10 @@
 int StartWertMessung = 50;                                              //Definiert die Variabel StartWertMessung und setzt den Wert auf X
 int TolleranzWert = 5;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
-int BeckenMinTemp = 23;                                                 //Definiert die mindest Temp des Leim Beckens
+int eepromBeckenTemp;                                                   
+int BeckenMinTemp =23;
+
+//#include <EEPROM.h>
+//#include <nrf.h>
 
 //Start Display
   #include <SPI.h>                                                        //Lade Extension für OLED
@@ -24,8 +28,8 @@ int BeckenMinTemp = 23;                                                 //Defini
   #ifdef __AVR__
   #include <avr/power.h>                                                  //Lade Extension für LED-Leiste WS
   #endif
-  #define PIN 45                                                           //Definiert den digital PIN der LED Leiste  
-  #define NUMPIXELS      4                                                 //Definiert die Anzahl der LED´s am Port
+  #define PIN 45                                                          //Definiert den digital PIN der LED Leiste  
+  #define NUMPIXELS 8                                                     //Definiert die Anzahl der LED´s am Port
   Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);       //Initialisiere die Lib. für die LED-Leiste
 //Ende LED Leiste
 
@@ -87,6 +91,8 @@ int BeckenMinTemp = 23;                                                 //Defini
 void setup() {
   Serial.begin(9600);                                                 //Initialisiere Serielle-Schnittstelle
 
+ //  int BeckenMinTemp = eepromReadInt(eepromBeckenTemp);               //EEPROM AUSLESEN
+
   //LED LEISTE
 #if defined (__AVR_ATtiny85__)
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
@@ -127,6 +133,9 @@ void setup() {
 
 
 void loop() {
+               
+
+  
   //START DS TEMP
   sensors.requestTemperatures();                                          //fragt Beckentemperatur ab
   //ENDE DS TEMP
@@ -140,6 +149,17 @@ void loop() {
 
   //Temp unter 25°C kein start und led auf blau
   if (sensors.getTempCByIndex(0) < BeckenMinTemp) {                         //Wenn Temp zu Kalt:
+    
+    if (digitalRead(buttonPinPlus) == 0) {                                  //Taster für BeckenTempAnpassung
+      BeckenMinTemp = BeckenMinTemp + 1;
+      //eepromWriteInt(eepromBeckenTemp, BeckenMinTemp);                    //Daten in EEPROM Schreiben
+    }
+    if (digitalRead(buttonPinMinus) == 0) {                                 //Taster für BeckenTempAnpassung
+      BeckenMinTemp = BeckenMinTemp - 1;
+      //eepromWriteInt(eepromBeckenTemp, BeckenMinTemp);                    //Daten in EEPROM Schreiben
+    }
+
+    
 
     //START DISPLAY AUSGABE
       display.invertDisplay(true);                                          // Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
@@ -161,10 +181,15 @@ void loop() {
     digitalWrite(brakePin, HIGH);                                            //Schaltet den Motor aus
     analogWrite(pwmPin, 0);                                                  //Motor geschwindikeit aus
     //ENDE MOTOR AUS!
-
+  
     // LED AUF BLAU!
     for (int i = 0; i < NUMPIXELS; i++) {
       pixels.setPixelColor(i, pixels.Color(51, 0, 255));                    // BLAUE LED
+      pixels.show();                                                        // This sends the updated pixel color to the hardware.
+    }
+    delay(500);
+    for (int i = 0; i < NUMPIXELS; i++) {
+      pixels.setPixelColor(i, pixels.Color(0, 0, 0));                       // BLAUE AUS
       pixels.show();                                                        // This sends the updated pixel color to the hardware.
     }
     //ENDE LED AUF BLAU
@@ -217,13 +242,14 @@ void loop() {
 
     //Tolleranz abfrage
     if (mittelFitalVal > (SollWert + TolleranzWert)) {
-      display.invertDisplay(true);                                            // Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
-      digitalWrite(relaisPin, LOW);                                           // Relais aus
-      display.setTextSize(1);                                                 // Schriftgroeße 1 (klein)
-      display.println("Mehr Wasser");                                         // Leere Zeile
-      display.setTextSize(2);                                                 // Schriftgroeße 2 (mittel)
-      display.print(mittelFitalVal); display.print("/"); display.println(SollWert);         // Ausgabe des aktuellen Viskositaetswerts und den SollWert (bsp:  45/50)
-      display.clearDisplay();                                                 // Loescht das Display
+      display.invertDisplay(true);
+      digitalWrite(relaisPin, LOW);                                          //Relais an
+      display.setTextSize(1);
+      display.setTextColor(WHITE);
+      display.println("Mehr Wasser");                                      // Leere Zeile
+      display.setTextSize(2);
+      //display.setTextColor(BLACK, WHITE);                                   // 'inverted' text
+      display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
 
       for (int i = 0; i < NUMPIXELS; i++) {
         pixels.setPixelColor(i, pixels.Color(255, 0, 0));                     // Rote LED
@@ -289,4 +315,27 @@ void loop() {
   Serial.println(sensors.getTempCByIndex(0));                                 //Beckentemperatur
 
   delay(333);
+
+//                                                                            //funktion zum lesen des EEPROM 
+//int eepromReadInt(int adr) {  
+//// Integer aus dem EEPROM lesen
+//byte low, high;
+//  low=EEPROM.read(adr);
+//  high=EEPROM.read(adr+1);
+//  return low + ((high << 8)&0xFF00);
+//} //eepromReadInt
+//
+//                                                                            //funktion zum schreiben des EEPROM
+//void eepromWriteInt(int adr, int wert) {
+//// Integer in das EEPROM schreiben
+//byte low, high;
+//  low=wert&0xFF;
+//  high=(wert >> 8)&0xFF;
+//  EEPROM.write(adr, low); // dauert 3,3ms
+//  EEPROM.write(adr+1, high);
+//  return;
+//} //eepromWriteInt
 }
+
+
+

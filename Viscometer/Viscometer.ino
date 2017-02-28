@@ -258,14 +258,13 @@ void loop() {
   //Tolleranz abfrage
   if (mittelFitalVal > (SollWert + 5)) {
     display.invertDisplay(true);
-    digitalWrite(relaisPin, LOW); //Relais aus
+    digitalWrite(relaisPin, LOW); //Relais an
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.println("Mehr Wasser");    // Leere Zeile
     display.setTextSize(2);
-   // display.setTextColor(BLACK, WHITE); // 'inverted' text
+    //display.setTextColor(BLACK, WHITE); // 'inverted' text
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
-    display.clearDisplay();
 
     for(int i=0;i<NUMPIXELS;i++){
     // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255

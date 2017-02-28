@@ -179,18 +179,7 @@ void loop() {
   //temp abfrage des Beckens -- start des Motor
 
 //Temp unter 25°C kein start und led auf blau
-  if(sensors.getTempCByIndex(0)<25){
-
-      //START DISPLAY AUSGABE
-      display.clearDisplay();
-      display.setCursor(0, 0);
-      display.setTextColor(WHITE);
-      display.setTextSize(1);
-      display.println("Leim zu kalt!");    // Leere Zeile
-      display.print("Temp: ");    // Leere Zeile
-      display.print(sensors.getTempCByIndex(0));
-      display.clearDisplay();
-      //ENDE DISPLAY AUSGABE
+  if(sensors.getTempCByIndex(0)<20){
 
       //MOTOR AUS!
         digitalWrite(directionPin, HIGH); //Establishes forward direction of Channel A
@@ -204,6 +193,19 @@ void loop() {
         pixels.show(); // This sends the updated pixel color to the hardware.
         }
       //ENDE LED AUF BLAU
+      
+    display.setCursor(0, 0);
+    display.setTextColor(WHITE);
+    display.invertDisplay(true);
+    digitalWrite(relaisPin, LOW); //Relais aus
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.println("Leim zu Kalt!");    // Leere Zeile
+    display.setTextSize(2);
+   // display.setTextColor(BLACK, WHITE); // 'inverted' text
+    display.clearDisplay();
+
+    delay(333);
    
    }else{
     

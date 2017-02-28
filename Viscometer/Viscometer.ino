@@ -1,86 +1,86 @@
 int StartWertMessung = 50;                                              //Definiert die Variabel StartWertMessung und setzt den Wert auf X
 int TolleranzWert = 5;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
-int BeckenMinTemp = 20;                                                 //Definiert die mindest Temp des Leim Beckens
+int BeckenMinTemp = 23;                                                 //Definiert die mindest Temp des Leim Beckens
 
 //Start Display
-#include <SPI.h>                                                        //Lade Extension für OLED
-#include <Wire.h>                                                       //Lade Extension für OLED
-#include <Adafruit_GFX.h>                                               //Lade Extension für OLED
-#include <Adafruit_SSD1306.h>                                           //Lade Extension für OLED
-#define OLED_MOSI   39                                                  //Data port zum OLED Display
-#define OLED_CLK   37                                                   //CLK port zum OLED Display
-#define OLED_DC    35                                                   //DC Port zum OLED DISPLAY
-#define OLED_CS    31                                                   //CS Port zum OLED Display
-#define OLED_RESET 33                                                   //RST Port zum OLED Display
-Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);            //Initialisiere das OLED Display
-#define NUMFLAKES 10
-#define XPOS 0
-#define YPOS 1
-#define DELTAY 2
+  #include <SPI.h>                                                        //Lade Extension für OLED
+  #include <Wire.h>                                                       //Lade Extension für OLED
+  #include <Adafruit_GFX.h>                                               //Lade Extension für OLED
+  #include <Adafruit_SSD1306.h>                                           //Lade Extension für OLED
+  #define OLED_MOSI   39                                                  //Data port zum OLED Display
+  #define OLED_CLK   37                                                   //CLK port zum OLED Display
+  #define OLED_DC    35                                                   //DC Port zum OLED DISPLAY
+  #define OLED_CS    31                                                   //CS Port zum OLED Display
+  #define OLED_RESET 33                                                   //RST Port zum OLED Display
+  Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);            //Initialisiere das OLED Display
+  #define NUMFLAKES 10
+  #define XPOS 0
+  #define YPOS 1
+  #define DELTAY 2
 //Ende Display
 
 //LED Leiste
-#include <Adafruit_NeoPixel.h>                                          //Lade Extension für LED-Leiste WS
-#ifdef __AVR__
-#include <avr/power.h>                                                  //Lade Extension für LED-Leiste WS
-#endif
-#define PIN 45                                                           //Definiert den digital PIN der LED Leiste  
-#define NUMPIXELS      4                                                 //Definiert die Anzahl der LED´s am Port
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);       //Initialisiere die Lib. für die LED-Leiste
+  #include <Adafruit_NeoPixel.h>                                          //Lade Extension für LED-Leiste WS
+  #ifdef __AVR__
+  #include <avr/power.h>                                                  //Lade Extension für LED-Leiste WS
+  #endif
+  #define PIN 45                                                           //Definiert den digital PIN der LED Leiste  
+  #define NUMPIXELS      4                                                 //Definiert die Anzahl der LED´s am Port
+  Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);       //Initialisiere die Lib. für die LED-Leiste
 //Ende LED Leiste
 
 
 //Taster
-const int buttonPinPlus = 24;                                           //Definiert den digitalen PIN für den Plus Taster
-const int buttonPinMinus = 25;                                          //Definiert den digitalen PIN für den Minus Taster
-int buttonState = 0;                                                    //Definiiert die Variable buttonState und setzt sie auf 0;
-int SollWert = StartWertMessung;                                        //Definiert die Variable SollWert und weißt Ihr einen definierten Startwert zu
+  const int buttonPinPlus = 24;                                           //Definiert den digitalen PIN für den Plus Taster
+  const int buttonPinMinus = 25;                                          //Definiert den digitalen PIN für den Minus Taster
+  int buttonState = 0;                                                    //Definiiert die Variable buttonState und setzt sie auf 0;
+  int SollWert = StartWertMessung;                                        //Definiert die Variable SollWert und weißt Ihr einen definierten Startwert zu
 //ENDE TASTER
 
 
 //RELAY
-const int relaisPin = 10;                                               //Definiert einen PWM Port für das schalten des Relais.
+  const int relaisPin = 10;                                               //Definiert einen PWM Port für das schalten des Relais.
 //ENDE RELAY
 
 
 // Variablen zum Glätten
-int FiltVal = StartWertMessung;                                       //Definiert Variable zum glätten der Werte
-int FF;                                                               //Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
-int NewVal = StartWertMessung;                                        //Definiert Variable zum glätten der Werte
-
-int FiltVal2 = StartWertMessung;                                      //Definiert Variable zum glätten der Werte
-int FF2;                                                              //Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
-int NewVal2 = StartWertMessung;                                       //Definiert Variable zum glätten der Werte
-
-int FiltVal3 = StartWertMessung;                                      //Definiert Variable zum glätten der Werte
-int FF3;                                                              //Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
-int NewVal3 = StartWertMessung;                                       //Definiert Variable zum glätten der Werte
-
-int mittelFitalVal = StartWertMessung;                                //definiert die Variable mittelFitalVal und weißt den geglätteten Wert zu.
+  int FiltVal = StartWertMessung;                                       //Definiert Variable zum glätten der Werte
+  int FF;                                                               //Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
+  int NewVal = StartWertMessung;                                        //Definiert Variable zum glätten der Werte
+  
+  int FiltVal2 = StartWertMessung;                                      //Definiert Variable zum glätten der Werte
+  int FF2;                                                              //Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
+  int NewVal2 = StartWertMessung;                                       //Definiert Variable zum glätten der Werte
+  
+  int FiltVal3 = StartWertMessung;                                      //Definiert Variable zum glätten der Werte
+  int FF3;                                                              //Definiert den Glättungsfaktor 1=werte werden 1:1 übernommen 9=es werden nur 10% veränderung übernommen
+  int NewVal3 = StartWertMessung;                                       //Definiert Variable zum glätten der Werte
+  
+  int mittelFitalVal = StartWertMessung;                                //definiert die Variable mittelFitalVal und weißt den geglätteten Wert zu.
 //Ende Variablen zum Glätten
 
 //BEGIN MOTOR BOARD
 //Channel B
-int directionPin = 13;                                                //Definiert für Channel B am Motorshield den Port
-int pwmPin = 11;                                                      //Definiert für Channel B am Motorshield den Port
-int brakePin = 8;                                                     //Definiert für Channel B am Motorshield den Port
-int currentPin = A1;                                                  //Definiert für Channel B am Motorshield den Port
+  int directionPin = 13;                                                //Definiert für Channel B am Motorshield den Port
+  int pwmPin = 11;                                                      //Definiert für Channel B am Motorshield den Port
+  int brakePin = 8;                                                     //Definiert für Channel B am Motorshield den Port
+  int currentPin = A1;                                                  //Definiert für Channel B am Motorshield den Port
 //ENDE MOTOR
 
 //START DS TEMP
-#include <OneWire.h>                                                  //Lade Lib für den wasserdichten Beckentemperaturfühler
-#include <DallasTemperature.h>                                        //Lade Lib für den wasserdichten Beckentemperaturfühler
-
-#define ONE_WIRE_BUS 41                                               //Definiert den PIN den wasserdichten Beckentemperaturfühler
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
-//END DS TEMP
-
-//START DHT SENSOR TEMP/HYM                                           //Lade Lib für den kombinierten Raumluft Temp/Feuchtigkeits Sensor
-#include "DHT.h"                                                      //Lade Lib für den kombinierten Raumluft Temp/Feuchtigkeits Sensor            
-#define DHTPIN 22                                                     //Definiert den PIN für den Raumluft Temp/Feuchtigkeits Sensor
-#define DHTTYPE DHT22                                                 //Definiere TYP für den den Raumluft Temp/Feuchtigkeits Sensor
-DHT dht(DHTPIN, DHTTYPE);
+  #include <OneWire.h>                                                  //Lade Lib für den wasserdichten Beckentemperaturfühler
+  #include <DallasTemperature.h>                                        //Lade Lib für den wasserdichten Beckentemperaturfühler
+  
+  #define ONE_WIRE_BUS 41                                               //Definiert den PIN den wasserdichten Beckentemperaturfühler
+  OneWire oneWire(ONE_WIRE_BUS);
+  DallasTemperature sensors(&oneWire);
+  //END DS TEMP
+  
+  //START DHT SENSOR TEMP/HYM                                           //Lade Lib für den kombinierten Raumluft Temp/Feuchtigkeits Sensor
+  #include "DHT.h"                                                      //Lade Lib für den kombinierten Raumluft Temp/Feuchtigkeits Sensor            
+  #define DHTPIN 22                                                     //Definiert den PIN für den Raumluft Temp/Feuchtigkeits Sensor
+  #define DHTTYPE DHT22                                                 //Definiere TYP für den den Raumluft Temp/Feuchtigkeits Sensor
+  DHT dht(DHTPIN, DHTTYPE);
 //END DHT SENSOR
 
 

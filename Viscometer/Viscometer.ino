@@ -21,6 +21,22 @@
   #define DELTAY 2
 //Ende Display
 
+//LED Leiste
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+// Which pin on the Arduino is connected to the NeoPixels?
+// On a Trinket or Gemma we suggest changing this to 1
+#define PIN 45        
+#define NUMPIXELS      4
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+
+//Ende LED Leiste
+
 int StartWertMessung = 50;
 
 //Taster
@@ -97,6 +113,17 @@ int StartWertMessung = 50;
 void setup()   {
   Serial.begin(9600);
 
+  //LED LEISTE
+  // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
+#if defined (__AVR_ATtiny85__)
+  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
+#endif
+  // End of trinket special code
+
+  pixels.begin(); // This initializes the NeoPixel library.
+
+  //ENDE LED LEISTE
+
   //RELAYS
   pinMode(relaisPin, OUTPUT); // Den PWM PIN "relaisPin" als Ausgangssignal setzen.
   //RELAYS END
@@ -135,27 +162,53 @@ void setup()   {
   display.drawPixel(10, 10, WHITE);
   // Clear the buffer.
   display.clearDisplay();
-  //display.invertDisplay(true);
 
-
-  
-  // text display tests
-  //display.setTextSize(1);
-  //display.setTextColor(WHITE);
-  //display.setCursor(0,0);
-  //display.println("Hello, world!");
-  //display.setTextColor(BLACK, WHITE); // 'inverted' text
-  //display.println(3.141592);
-  //display.setTextSize(2);
-  //display.setTextColor(WHITE);
-  //display.print("0x"); display.println(0xDEADBEEF, HEX);
-  //display.display();
-  //delay(2000);
-  //display.clearDisplay();
 }
 //Ende DISPLAY
 
 void loop() {
+  //START DS TEMP
+  sensors.requestTemperatures();
+  //ENDE DS TEMP
+
+    //START DHT
+  float h = dht.readHumidity();     //Luftfeuchte auslesen
+  float t = dht.readTemperature();  //Temperatur auslesen
+  //END DHT
+
+  //temp abfrage des Beckens -- start des Motor
+
+//Temp unter 25°C kein start und led auf blau
+  if(sensors.getTempCByIndex(0)<25){
+
+      //START DISPLAY AUSGABE
+      display.clearDisplay();
+      display.setCursor(0, 0);
+      display.setTextColor(WHITE);
+      display.setTextSize(1);
+      display.println("Leim zu kalt!");    // Leere Zeile
+      display.print("Temp: ");    // Leere Zeile
+      display.print(sensors.getTempCByIndex(0));
+      display.clearDisplay();
+      //ENDE DISPLAY AUSGABE
+
+      //MOTOR AUS!
+        digitalWrite(directionPin, HIGH); //Establishes forward direction of Channel A
+        digitalWrite(brakePin, HIGH);   //Disengage the Brake for Channel A
+        analogWrite(pwmPin, 0);   //Spins the motor on Channel A at full speed
+      //ENDE MOTOR AUS!
+      // LED AUF BLAU! 
+        for(int i=0;i<NUMPIXELS;i++){
+        // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+        pixels.setPixelColor(i, pixels.Color(51,0,255)); // Moderately bright green color.
+        pixels.show(); // This sends the updated pixel color to the hardware.
+        }
+      //ENDE LED AUF BLAU
+   
+   }else{
+    
+//Temp über 25°C
+// Eigentlicher Start!!!
   
   //TASTER SOLL WERT
   if (digitalRead(buttonPinPlus) == 0) {
@@ -164,7 +217,6 @@ void loop() {
   if (digitalRead(buttonPinMinus) == 0) {
     SollWert = SollWert - 1;
   }
-
   //ENDE TASTER SOLLWERT
 
   //START MOTOR
@@ -174,20 +226,11 @@ void loop() {
   analogWrite(pwmPin, 255);   //Spins the motor on Channel A at full speed
   //ENDE  MOTOR
 
-  //START DS TEMP
-  sensors.requestTemperatures();
-  //ENDE DS TEMP
-
-  //START DHT
-  float h = dht.readHumidity();     //Luftfeuchte auslesen
-  float t = dht.readTemperature();  //Temperatur auslesen
-  //END DHT
 
   //glaetten der werte
   NewVal = analogRead(currentPin);
   FF = 9;
   FiltVal = ((FiltVal * FF) + NewVal) / (FF + 1.0);
-
 
   //zweite glaettung
   NewVal2 = FiltVal;
@@ -202,7 +245,6 @@ void loop() {
   //mitteln der werte
   mittelFitalVal = 0;
   sumFiltVal = 0;
-
 
   mittelFitalVal = FiltVal3;
   //ende glaetten
@@ -221,6 +263,13 @@ void loop() {
     display.setTextSize(2);
    // display.setTextColor(BLACK, WHITE); // 'inverted' text
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
+    display.clearDisplay();
+
+    for(int i=0;i<NUMPIXELS;i++){
+    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    pixels.setPixelColor(i, pixels.Color(255,0,0)); // Moderately bright green color.
+    pixels.show(); // This sends the updated pixel color to the hardware.
+    }
   }
   else if (mittelFitalVal < (SollWert - 5)) {
     display.invertDisplay(true);
@@ -231,6 +280,12 @@ void loop() {
     display.setTextSize(2);
     //display.setTextColor(BLACK, WHITE); // 'inverted' text
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
+
+    for(int i=0;i<NUMPIXELS;i++){
+    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    pixels.setPixelColor(i, pixels.Color(255,102,0)); // Moderately bright green color.
+    pixels.show(); // This sends the updated pixel color to the hardware.
+    }
   }
   else {
     display.invertDisplay(false);
@@ -241,9 +296,14 @@ void loop() {
     display.println("O.K.");    // Leere Zeile
     display.setTextSize(2);
     display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
+    
+    for(int i=0;i<NUMPIXELS;i++){
+    // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    pixels.setPixelColor(i, pixels.Color(0,150,0)); // Moderately bright green color.
+    pixels.show(); // This sends the updated pixel color to the hardware.
+    }
   }
   //Ende Tolleranz
-
 
   display.setTextSize(1);
   display.setTextColor(WHITE);
@@ -255,8 +315,10 @@ void loop() {
   display.print(t);
   display.println(" Raumtemp.");   // Ungebungslufttemperatur
   display.display();
-
+  
   display.clearDisplay();
+   }
+  
 //ENDE DISPLAY AUSGABE
 
   Serial.print(analogRead(currentPin));     //Ausgabe des Analogen CurrentSignals
@@ -268,6 +330,6 @@ void loop() {
   Serial.print(t);                           //Raumtemperatur
   Serial.print("\t");
   Serial.println(sensors.getTempCByIndex(0));  //Beckentemperatur
-
-  delay(333);
+   
+   delay(333);
 }

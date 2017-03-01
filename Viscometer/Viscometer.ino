@@ -44,7 +44,7 @@ int ZeitFuerWasser = 10;                                                //MS fü
 
 
 //RELAY
-  const int relaisPin = 10;                                               //Definiert einen PWM Port für das schalten des Relais.
+  const int relaisPin = 26;                                               //Definiert einen PWM Port für das schalten des Relais.
 //ENDE RELAY
 
 
@@ -160,7 +160,9 @@ void loop() {
       //eepromWriteInt(eepromBeckenTemp, BeckenMinTemp);                    //Daten in EEPROM Schreiben
     }
 
-    
+     //Relais
+      digitalWrite(relaisPin, HIGH);                                           //Relais aus
+    //Ende Relais   
 
     //START DISPLAY AUSGABE
       display.invertDisplay(true);                                          // Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
@@ -205,6 +207,10 @@ void loop() {
     }
     //ENDE TASTER SOLLWERT
 
+    //Relais
+      digitalWrite(relaisPin, HIGH);                                           //Relais aus
+    //Ende Relais 
+
     //START MOTOR
     //backward @ half speed
     digitalWrite(directionPin, HIGH);                                           //Establishes forward direction of Channel A
@@ -244,10 +250,10 @@ void loop() {
         display.setCursor(0, 0);                                                            //Setzt für das OLED DISPLAY den Beginn auf 0.0 und die Schriftfarbe auf Weiß.
         display.setTextColor(WHITE);
         display.invertDisplay(true);
-        digitalWrite(relaisPin, HIGH);                                                      //Relais an
+        digitalWrite(relaisPin, LOW);                                                      //Relais an
         display.setTextSize(1);
         display.setTextColor(WHITE);
-        display.println("Weniger Wasser");                                                  // Anzeige
+        display.println("Mehr Wasser");                                                  // Anzeige
         display.setTextSize(2);
         //display.setTextColor(BLACK, WHITE);                                               // 'inverted' text
         display.print(mittelFitalVal); display.print("/"); display.println(SollWert);  
@@ -293,7 +299,7 @@ void loop() {
     }
     else {
       display.invertDisplay(false);
-      digitalWrite(relaisPin, LOW);                                           //Relais aus
+      digitalWrite(relaisPin, HIGH);                                           //Relais aus
       display.setTextColor(WHITE);
       display.setTextSize(1);
       display.setTextColor(WHITE);

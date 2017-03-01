@@ -1,7 +1,8 @@
 int StartWertMessung = 50;                                              //Definiert die Variabel StartWertMessung und setzt den Wert auf X
 int TolleranzWert = 5;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
 int eepromBeckenTemp;                                                   
-int BeckenMinTemp =23;
+int BeckenMinTemp = 23;
+int ZeitFuerWasser = 10;                                                //MS für das Messen des neuen Werts (offene Wasserventil)
 
 //#include <EEPROM.h>
 //#include <nrf.h>
@@ -237,18 +238,42 @@ void loop() {
 
     //Tolleranz abfrage
     if (mittelFitalVal > (SollWert + TolleranzWert)) {
-      display.invertDisplay(true);
-      digitalWrite(relaisPin, LOW);                                          //Relais an
-      display.setTextSize(1);
-      display.setTextColor(WHITE);
-      display.println("Mehr Wasser");                                      // Leere Zeile
-      display.setTextSize(2);
-      //display.setTextColor(BLACK, WHITE);                                   // 'inverted' text
-      display.print(mittelFitalVal); display.print("/"); display.println(SollWert);
 
-      for (int i = 0; i < NUMPIXELS; i++) {
-        pixels.setPixelColor(i, pixels.Color(255, 0, 0));                     // Rote LED
-        pixels.show(); // This sends the updated pixel color to the hardware.
+      for(int i1= 0; i1 < ZeitFuerWasser; i1++){                                               //Schleife damit das Ventil eine Zeit-X offen ist & nicht sofort geschlossen wird
+        display.clearDisplay();
+        display.setCursor(0, 0);                                                            //Setzt für das OLED DISPLAY den Beginn auf 0.0 und die Schriftfarbe auf Weiß.
+        display.setTextColor(WHITE);
+        display.invertDisplay(true);
+        digitalWrite(relaisPin, HIGH);                                                      //Relais an
+        display.setTextSize(1);
+        display.setTextColor(WHITE);
+        display.println("Weniger Wasser");                                                  // Anzeige
+        display.setTextSize(2);
+        //display.setTextColor(BLACK, WHITE);                                               // 'inverted' text
+        display.print(mittelFitalVal); display.print("/"); display.println(SollWert);  
+        
+        display.setTextSize(1);
+        display.setTextColor(WHITE);
+        display.println(" ");                                                               // Leere Zeile        
+        display.print(sensors.getTempCByIndex(0));
+        display.println(" Leimtemp.");                                                      //Beckentemperatur
+        display.print(h);
+        display.println(" Luftfeuch.");                                                     // Luftfeuchtigkeit
+        display.print(t);
+        display.println(" Raumtemp.");                                                      // Ungebungslufttemperatur
+        
+        display.setTextSize(1);
+        display.setTextColor(WHITE);
+        display.print(i1);display.print("/"); display.print(ZeitFuerWasser);             //Zeigt die Sekunden des Offenen Ventils an
+        display.println(" Ventil offen!");
+        display.display();
+
+        
+        for (int i = 0; i < NUMPIXELS; i++) {                                             // Anzahl der LED´ 
+          pixels.setPixelColor(i, pixels.Color(255, 0, 0));                               // Rote LED
+          pixels.show(); // This sends the updated pixel color to the hardware.           //
+        }
+        delay(1);                                                                              
       }
     }
     else if (mittelFitalVal < (SollWert - TolleranzWert)) {

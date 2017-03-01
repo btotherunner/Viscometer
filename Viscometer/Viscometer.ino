@@ -332,7 +332,12 @@ void loop() {
   Serial.print("\t");
   Serial.print(t);                                                            //Raumtemperatur
   Serial.print("\t");
-  Serial.println(sensors.getTempCByIndex(0));                                 //Beckentemperatur
+  Serial.print(sensors.getTempCByIndex(0));                                 //Beckentemperatur
+  Serial.print("\t");
+  Serial.print(SollWert + TolleranzWert);                                   //Ausgabe des Tolleranzwertes(max) im Plotter
+  Serial.print("\t");
+  Serial.println(SollWert - TolleranzWert);                                 //Ausgabe des Tolleranzwertes(min) im Plotter
+
 
   delay(333);
 

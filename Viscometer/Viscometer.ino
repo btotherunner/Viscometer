@@ -1,11 +1,10 @@
-int StartWertMessung = 50;                                              //Definiert die Variabel StartWertMessung und setzt den Wert auf X
-int TolleranzWert = 5;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
+int StartWertMessung;                                              //Definiert die Variabel StartWertMessung und setzt den Wert auf X
+int TolleranzWert = 10;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
 int eepromBeckenTemp;                                                   
-int BeckenMinTemp = 23;
+int BeckenMinTemp;
 int ZeitFuerWasser = 10;                                                //MS für das Messen des neuen Werts (offene Wasserventil)
 
-//#include <EEPROM.h>
-//#include <nrf.h>
+#include <EEPROM.h>
 
 //Start Display
   #include <SPI.h>                                                        //Lade Extension für OLED
@@ -88,11 +87,9 @@ int ZeitFuerWasser = 10;                                                //MS fü
   DHT dht(DHTPIN, DHTTYPE);
 //END DHT SENSOR
 
-
 void setup() {
-  Serial.begin(9600);                                                 //Initialisiere Serielle-Schnittstelle
-
- //  int BeckenMinTemp = eepromReadInt(eepromBeckenTemp);               //EEPROM AUSLESEN
+  Serial.begin(9600);                                                 //Initialisiere Serielle-Schnittstell
+   
 
   //LED LEISTE
 #if defined (__AVR_ATtiny85__)
@@ -130,12 +127,14 @@ void setup() {
   // Clear the buffer.
   display.clearDisplay();                                                 //Leert das Display
   //Ende DISPLAY
+
+
+   BeckenMinTemp = EEPROM.read(0);                                        //EEPROM AUSLESEN Beckentemp = 0           
+   SollWert = EEPROM.read(1);                                             //EEPROM AUSLESEN Viscositätssollwert = 1  
 }
 
 
 void loop() {
-               
-
   
   //START DS TEMP
   sensors.requestTemperatures();                                          //fragt Beckentemperatur ab
@@ -149,15 +148,16 @@ void loop() {
   //temp abfrage des Beckens -- start des Motor
 
   //Temp unter XX°C kein start und led auf blau
+  
   if (sensors.getTempCByIndex(0) < BeckenMinTemp) {                         //Wenn Temp zu Kalt:
     
     if (digitalRead(buttonPinPlus) == 0) {                                  //Taster für BeckenTempAnpassung
       BeckenMinTemp = BeckenMinTemp + 1;
-      //eepromWriteInt(eepromBeckenTemp, BeckenMinTemp);                    //Daten in EEPROM Schreiben
+      EEPROM.write(0, BeckenMinTemp);
     }
     if (digitalRead(buttonPinMinus) == 0) {                                 //Taster für BeckenTempAnpassung
       BeckenMinTemp = BeckenMinTemp - 1;
-      //eepromWriteInt(eepromBeckenTemp, BeckenMinTemp);                    //Daten in EEPROM Schreiben
+      EEPROM.write(0, BeckenMinTemp);                    //Daten in EEPROM Schreiben
     }
 
      //Relais
@@ -201,9 +201,11 @@ void loop() {
     //TASTER SOLL WERT
     if (digitalRead(buttonPinPlus) == 0) {
       SollWert = SollWert + 1;
+      EEPROM.write(1, SollWert);
     }
     if (digitalRead(buttonPinMinus) == 0) {
       SollWert = SollWert - 1;
+      EEPROM.write(1, SollWert);
     }
     //ENDE TASTER SOLLWERT
 
@@ -221,15 +223,15 @@ void loop() {
 
     //glaetten der werte
     NewVal = analogRead(currentPin);
-    FF = 9;
+    FF = 3;
     FiltVal = ((FiltVal * FF) + NewVal) / (FF + 1.0);
     //zweite glaettung
     NewVal2 = FiltVal;
-    FF2 = 9;
+    FF2 = 3;
     FiltVal2 = ((FiltVal2 * FF2) + NewVal2) / (FF2 + 1.0);
     //dritte glaettung
     NewVal3 = FiltVal2;
-    FF3 = 9;
+    FF3 = 3;
     FiltVal3 = ((FiltVal3 * FF3) + NewVal3) / (FF2 + 1.0);
 
     //mitteln der werte
@@ -345,27 +347,10 @@ void loop() {
   Serial.println(SollWert - TolleranzWert);                                 //Ausgabe des Tolleranzwertes(min) im Plotter
 
 
-  delay(333);
+  delay(100);
 
-//                                                                            //funktion zum lesen des EEPROM 
-//int eepromReadInt(int adr) {  
-//// Integer aus dem EEPROM lesen
-//byte low, high;
-//  low=EEPROM.read(adr);
-//  high=EEPROM.read(adr+1);
-//  return low + ((high << 8)&0xFF00);
-//} //eepromReadInt
-//
-//                                                                            //funktion zum schreiben des EEPROM
-//void eepromWriteInt(int adr, int wert) {
-//// Integer in das EEPROM schreiben
-//byte low, high;
-//  low=wert&0xFF;
-//  high=(wert >> 8)&0xFF;
-//  EEPROM.write(adr, low); // dauert 3,3ms
-//  EEPROM.write(adr+1, high);
-//  return;
-//} //eepromWriteInt
+                                                                            //funktion zum lesen des EEPROM 
+
 }
 
 

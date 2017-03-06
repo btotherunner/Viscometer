@@ -1,7 +1,8 @@
 int StartWertMessung;                                              //Definiert die Variabel StartWertMessung und setzt den Wert auf X
-int TolleranzWert = 10;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
+int TolleranzWert = 5;                                                  //Definiert die Variable TolleranzWert (ist der Wert - in der der Viscositätswert schwanken darf...)
 int eepromBeckenTemp;
 int BeckenMinTemp;
+int mittelwert;
 
 #include <EEPROM.h>
 
@@ -122,11 +123,13 @@ void setup() {
 
   BeckenMinTemp = EEPROM.read(0);                                        //EEPROM AUSLESEN Beckentemp = 0
   SollWert = EEPROM.read(1);                                             //EEPROM AUSLESEN Viscositätssollwert = 1
-  //SollWert = 178;
+  //SollWert = 325;
 }
 
 
 void loop() {
+
+  
 
 
   //START DS TEMP
@@ -158,7 +161,7 @@ void loop() {
     //Ende Relais
 
     //START DISPLAY AUSGABE
-    display.invertDisplay(true);                                          // Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
+    //display.invertDisplay(false);                                          // Display wird invertiert angezeig d.h. weißer Hintergrund - schwarze Schrift
     display.setTextSize(2);
     display.setTextColor(WHITE);
     display.setCursor(0, 2);
@@ -213,14 +216,19 @@ void loop() {
     analogWrite(pwmPin, 255);                                                   //Spins the motor on Channel A at full speed
     //ENDE  MOTOR
 
-    FiltVal = analogRead(currentPin);         //Ausgabe des original Werts
+    //glaetten der werte
+    NewVal = analogRead(currentPin);
+    FF = 5;
+    FiltVal = ((FiltVal * FF) + NewVal) / (FF + 1.0);
+    
+    //FiltVal = analogRead(currentPin);         //Ausgabe des original Werts
 
     display.setCursor(0, 0);                                                  //Setzt für das OLED DISPLAY den Beginn auf 0.0 und die Schriftfarbe auf Weiß.
     display.setTextColor(WHITE);
 
     //Tolleranz abfrage
     if (FiltVal > (SollWert + TolleranzWert)) {
-      display.invertDisplay(true);
+      //display.invertDisplay(true);
       digitalWrite(relaisPin, LOW);                                          //Relais an
       display.setTextSize(1);
       display.setTextColor(WHITE);
@@ -236,7 +244,7 @@ void loop() {
 
     }
     else if (FiltVal < (SollWert - TolleranzWert)) {
-      display.invertDisplay(true);
+     // display.invertDisplay(true);
       digitalWrite(relaisPin, HIGH);                                          //Relais aus
       display.setTextSize(1);
       display.setTextColor(WHITE);
@@ -285,12 +293,12 @@ void loop() {
 
   Serial.print(FiltVal);                                               //Geglätteter Wert des Current Signals
   Serial.print("\t");
-//  Serial.print(h);                                                            //Raumfeuchtigkeit
-//  Serial.print("\t");
-//  Serial.print(t);                                                            //Raumtemperatur
-//  Serial.print("\t");
-//  Serial.print(sensors.getTempCByIndex(0));                                 //Beckentemperatur
-//  Serial.print("\t");
+  Serial.print(h);                                                            //Raumfeuchtigkeit
+  Serial.print("\t"); 
+  Serial.print(t);                                                            //Raumtemperatur
+  Serial.print("\t");
+  Serial.print(sensors.getTempCByIndex(0));                                 //Beckentemperatur
+  Serial.print("\t");
   Serial.print(SollWert + TolleranzWert);                                   //Ausgabe des Tolleranzwertes(max) im Plotter
   Serial.print("\t");
   Serial.println(SollWert - TolleranzWert);                                 //Ausgabe des Tolleranzwertes(min) im Plotter
